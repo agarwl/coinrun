@@ -92,6 +92,7 @@ bool PAINT_VEL_INFO = false;
 bool USE_HIGH_DIF = false;
 bool USE_DATA_AUGMENTATION = false;
 int DEFAULT_GAME_TYPE = CoinRunToTheRight_v0;
+int RANDOM_TRAIN_FLAG = 0;
 
 static bool shutdown_flag = false;
 static std::string monitor_dir;
@@ -1481,10 +1482,18 @@ void state_reset(const std::shared_ptr<State>& state, int game_type)
   agent.zoom = zoom;
   agent.target_zoom = zoom;
 
-  agent.theme_n = maze_gen.randn(player_themesl.size());
-  state->ground_n = maze_gen.randn(ground_themes.size());
-  state->bg_n = maze_gen.randn(bg_images.size());
-
+  if (RANDOM_TRAIN_FLAG == 0) {
+    agent.theme_n = maze_gen.randn(player_themesl.size()/2);
+    state->ground_n = maze_gen.randn(ground_themes.size()/2);
+    state->bg_n = maze_gen.randn(bg_images.size()/2);
+  } else {
+    int ps = player_themesl.size();
+    int gs = ground_themes.size();
+    int bs = bg_images.size();
+    agent.theme_n = ps/2 + maze_gen.randn(ps - ps/2);
+    state->ground_n = gs/2 + maze_gen.randn(gs - gs/2);
+    state->bg_n = bs/2 + maze_gen.randn(bs - bs/2);
+  }
   agent.reset(0);
 
   state->maze->is_terminated = false;
@@ -1817,6 +1826,7 @@ void initialize_args(int *int_args) {
 
   int training_sets_seed = int_args[5];
   int rand_seed = int_args[6];
+  RANDOM_TRAIN_FLAG = int_args[7];
 
   if (NUM_LEVELS > 0 && (training_sets_seed != -1)) {
     global_rand_gen.seed(training_sets_seed);

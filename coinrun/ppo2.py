@@ -280,8 +280,13 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
     train_t_total = 0
 
     can_save = True
-    checkpoints = [32, 64]
+    checkpoints = list(range(0,2049,10))
     saved_key_checkpoints = [False] * len(checkpoints)
+    rand_processes = [v for v in tf.global_variables() if 'randprocess' in v.name]
+    if len(rand_processes) > 0:
+        init_process = tf.variables_initializer(rand_processes)
+    else:
+        init_process = None
 
     if Config.SYNC_FROM_ROOT and rank != 0:
         can_save = False
@@ -300,6 +305,8 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
 
         mpi_print('collecting rollouts...')
         run_tstart = time.time()
+        if len(rand_processes) > 0:
+            sess.run(init_process)
 
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run()
         epinfobuf10.extend(epinfos)

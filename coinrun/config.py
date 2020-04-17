@@ -19,7 +19,8 @@ class ConfigSingle(object):
         arg_keys = []
         bool_keys = []
         type_keys = []
-
+        random_keys = []
+        
         # The runid, used to determine the name for save files.
         type_keys.append(('runid', 'run_id', str, 'tmp'))
 
@@ -117,7 +118,15 @@ class ConfigSingle(object):
 
         # Use high resolution images for rendering
         bool_keys.append(('hres', 'is_high_res'))
-
+        
+        # additonal flags for random netwokrs
+        random_keys.append(('train_flag', 'train_flag', int, 0))
+        random_keys.append(('fm_coeff', 'fm_coeff', float, 0.002))
+        random_keys.append(('real_thres', 'real_thres', float, 0.9))
+        
+        random_keys.append(('ui', 'use_inversion', int, 0))
+        random_keys.append(('uct', 'use_color_transform', int, 0))
+        
         self.RES_KEYS = []
 
         for tk in type_keys:
@@ -135,6 +144,7 @@ class ConfigSingle(object):
         self.arg_keys = arg_keys
         self.bool_keys = bool_keys
         self.type_keys = type_keys
+        self.random_keys = random_keys
 
         self.load_data = {}
         self.args_dict = {}
@@ -258,6 +268,9 @@ class ConfigSingle(object):
         default_args.update(kwargs)
 
         parser = argparse.ArgumentParser()
+        
+        for rk in self.random_keys:
+            parser.add_argument('-' + rk[0], '--' + self.deprocess_field(rk[1]), type=rk[2], default=rk[3])
 
         for tk in self.type_keys:
             parser.add_argument('-' + tk[0], '--' + self.deprocess_field(tk[1]), type=tk[2], default=default_args[tk[1]])

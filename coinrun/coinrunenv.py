@@ -22,6 +22,10 @@ from coinrun.config import Config
 from mpi4py import MPI
 from baselines.common import mpi_util
 
+from PIL import Image
+from torchvision import transforms
+import scipy.misc
+
 # if the environment is crashing, try using the debug build to get
 # a readable stack trace
 DEBUG = False
@@ -106,7 +110,7 @@ def init_args_and_threads(cpu_count=4,
         mpi_rank, mpi_size = mpi_util.get_local_rank_size(MPI.COMM_WORLD)
         rand_seed = rand_seed - rand_seed % mpi_size + mpi_rank
 
-    int_args = np.array([int(is_high_difficulty), Config.NUM_LEVELS, int(Config.PAINT_VEL_INFO), Config.USE_DATA_AUGMENTATION, game_versions[Config.GAME_TYPE], Config.SET_SEED, rand_seed]).astype(np.int32)
+    int_args = np.array([int(is_high_difficulty), Config.NUM_LEVELS, int(Config.PAINT_VEL_INFO), Config.USE_DATA_AUGMENTATION, game_versions[Config.GAME_TYPE], Config.SET_SEED, rand_seed, Config.TRAIN_FLAG]).astype(np.int32)
 
     lib.initialize_args(int_args)
     lib.initialize_set_monitor_dir(logger.get_dir().encode('utf-8'), {'off': 0, 'first_env': 1, 'all': 2}[monitor_csv_policy])
@@ -155,7 +159,10 @@ class CoinRunVecEnv(VecEnv):
 
         num_channels = 1 if Config.USE_BLACK_WHITE else 3
         obs_space = gym.spaces.Box(0, 255, shape=[self.RES_H, self.RES_W, num_channels], dtype=np.uint8)
-
+        
+        if Config.USE_INVERSION:
+            self.inv_prob = [np.random.rand() for _ in range(num_envs)]    
+            
         super().__init__(
             num_envs=num_envs,
             observation_space=obs_space,
@@ -209,9 +216,26 @@ class CoinRunVecEnv(VecEnv):
 
         if Config.USE_BLACK_WHITE:
             obs_frames = np.mean(obs_frames, axis=-1).astype(np.uint8)[...,None]
-
+        if Config.USE_INVERSION:
+            obs_frames = self.use_inversion(obs_frames)
+            
         return obs_frames, self.buf_rew, self.buf_done, self.dummy_info
-
+    
+    def use_inversion(self, obs):
+        new_obs = []
+        for i, ob in enumerate(obs):
+            new_ob = ob.copy()
+            if self.inv_prob[i] < .5:
+                new_ob = 255 - ob
+            new_obs.append(new_ob)
+        new_obs = np.stack(new_obs)
+        if Config.PAINT_VEL_INFO:
+            rh = .2 # hard-coded velocity box size
+            mh = int(obs.shape[1]*rh)
+            mw = mh*2
+            new_obs[:,:mh,:mw] = obs[:,:mh,:mw]
+        return new_obs
+    
 def make(env_id, num_envs, **kwargs):
     assert env_id in game_versions, 'cannot find environment "%s", maybe you mean one of %s' % (env_id, list(game_versions.keys()))
     return CoinRunVecEnv(env_id, num_envs, **kwargs)
