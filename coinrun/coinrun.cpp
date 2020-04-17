@@ -93,6 +93,7 @@ bool USE_HIGH_DIF = false;
 bool USE_DATA_AUGMENTATION = false;
 int DEFAULT_GAME_TYPE = CoinRunToTheRight_v0;
 int RANDOM_TRAIN_FLAG = 0;
+int STATE_N_AS_LEVEL_SEED = 0;
 
 static bool shutdown_flag = false;
 static std::string monitor_dir;
@@ -1450,7 +1451,10 @@ void state_reset(const std::shared_ptr<State>& state, int game_type)
     int level_index = global_rand_gen.randint(0, NUM_LEVELS);
     level_seed = LEVEL_SEEDS[level_index];
   } else if (NUM_LEVELS > 0) {
-    level_seed = global_rand_gen.randint(0, NUM_LEVELS);
+    if (STATE_N_AS_LEVEL_SEED)
+      level_seed = state->state_n;
+    else
+      level_seed = global_rand_gen.randint(0, NUM_LEVELS);
   } else {
     level_seed = global_rand_gen.randint();
   }
@@ -1827,6 +1831,7 @@ void initialize_args(int *int_args) {
   int training_sets_seed = int_args[5];
   int rand_seed = int_args[6];
   RANDOM_TRAIN_FLAG = int_args[7];
+  STATE_N_AS_LEVEL_SEED = int_args[8];
 
   if (NUM_LEVELS > 0 && (training_sets_seed != -1)) {
     global_rand_gen.seed(training_sets_seed);

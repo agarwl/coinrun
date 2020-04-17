@@ -119,6 +119,9 @@ class ConfigSingle(object):
         # Use high resolution images for rendering
         bool_keys.append(('hres', 'is_high_res'))
         
+        # TODO(Add better documentation): additional flags for fixing randomness during eval
+        type_keys.append(('state_n_as_level_seed', 'state_n_as_level_seed', int, 0))
+
         # additonal flags for random netwokrs
         random_keys.append(('train_flag', 'train_flag', int, 0))
         random_keys.append(('fm_coeff', 'fm_coeff', float, 0.002))
