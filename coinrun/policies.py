@@ -209,7 +209,7 @@ class CnnPolicy(object):
         self.step = step
         self.value = value
         
-def random_impala_cnn(images, depths=[16, 32, 32]):
+def random_impala_cnn(images, depths=[16, 32, 32], return_representation=False):
     """
     Model used in the paper "IMPALA: Scalable Distributed Deep-RL with 
     Importance Weighted Actor-Learner Architectures" https://arxiv.org/abs/1802.01561
@@ -275,12 +275,16 @@ def random_impala_cnn(images, depths=[16, 32, 32]):
     fan_in  = num_colors    * kernel_size * kernel_size
     fan_out = randcnn_depth * kernel_size * kernel_size
     
-    mask_vbox = tf.Variable(tf.zeros_like(images, dtype=bool), trainable=False)
+    # mask_vbox = tf.Variable(tf.zeros_like(images, dtype=bool), trainable=False)
     mask_shape = tf.shape(images)
     rh = .2 # hard-coded velocity box size
     mh = tf.cast(tf.cast(mask_shape[1], dtype=tf.float32)*rh, dtype=tf.int32)
     mw = mh*2
-    mask_vbox = mask_vbox[:,:mh,:mw].assign(tf.ones([mask_shape[0], mh, mw, mask_shape[3]], dtype=bool))
+    ones = tf.ones([mask_shape[0], mh, mw, mask_shape[3]], dtype=bool)
+    # This doesn't depend on having a static image while the commented version does!
+    # mask_vbox = mask_vbox[:,:mh,:mw].assign(ones)
+    paddings = [[0, 0], [0, mask_shape[1] - mh], [0, mask_shape[2] - mw], [0, 0]]
+    mask_vbox = tf.pad(ones, paddings, mode='CONSTANT', constant_values=0)
 
     img  = tf.where(mask_vbox, x=tf.zeros_like(images), y=images)
     rand_img = tf.layers.conv2d(img, randcnn_depth, 3, padding='same', kernel_initializer=tf.initializers.glorot_normal(), trainable=False, name='randcnn')
@@ -291,24 +295,27 @@ def random_impala_cnn(images, depths=[16, 32, 32]):
 
     out = tf.layers.flatten(out)
     out = tf.nn.relu(out)
+    representation = out
     out = tf.layers.dense(out, 256, activation=tf.nn.relu)
-
-    return out, dropout_assign_ops
+    if return_representation:
+        return out, dropout_assign_ops, representation
+    else:
+        return out, dropout_assign_ops
 
 class RandomCnnPolicy(object):
-    def __init__(self, sess, ob_space, ac_space, nbatch, nsteps, **conv_kwargs): #pylint: disable=W0613
+    def __init__(self, sess, ob_space, ac_space, nbatch, nsteps, scope="model", **conv_kwargs): #pylint: disable=W0613
         self.pdtype = make_pdtype(ac_space)
         
         X, processed_x = observation_input(ob_space, nbatch)
         scaled_images = tf.cast(processed_x, tf.float32) / 255.
         mc_index = tf.placeholder(tf.int64, shape=[1], name='mc_index')
         
-        with tf.variable_scope("model", reuse=tf.AUTO_REUSE):    
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):    
             h, self.dropout_assign_ops = random_impala_cnn(scaled_images)    
             vf = fc(h, 'v', 1)[:,0]
             self.pd, self.pi = self.pdtype.pdfromlatent(h, init_scale=0.01)
             
-        with tf.variable_scope("model", reuse=tf.AUTO_REUSE):
+        with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             clean_h, _ = impala_cnn(scaled_images)
             clean_vf = fc(clean_h, 'v', 1)[:,0]
             self.clean_pd, self.clean_pi = self.pdtype.pdfromlatent(clean_h, init_scale=0.01)

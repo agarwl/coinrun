@@ -39,12 +39,12 @@ class ConfigSingle(object):
         type_keys.append(('lstm', 'use_lstm', int, 0, True))
 
         # The number of parallel environments to run
-        type_keys.append(('ne', 'num_envs', int, 32, True))
+        type_keys.append(('num_envs', 'num_envs', int, 32, True))
 
         # The number of levels in the training set.
         # If NUM_LEVELS = 0, the training set is unbounded. All level seeds will be randomly generated.
         # Use SET_SEED = -1 and NUM_LEVELS = 500 to train with the same levels in the paper.
-        type_keys.append(('nlev', 'num_levels', int, 0, True))
+        type_keys.append(('num_levels', 'num_levels', int, 0, True))
 
         # Provided as a seed for training set generation.
         # If SET_SEED = -1, this seed is not used and level seeds with be drawn from the range [0, NUM_LEVELS).
@@ -123,7 +123,8 @@ class ConfigSingle(object):
         type_keys.append(('state_n_as_level_seed', 'state_n_as_level_seed', int, 0))
 
         # additonal flags for random netwokrs
-        random_keys.append(('train_flag', 'train_flag', int, 0))
+        type_keys.append(('train_flag', 'train_flag', int, 0))
+#         random_keys.append(('train_flag', 'train_flag', int, 0))
         random_keys.append(('fm_coeff', 'fm_coeff', float, 0.002))
         random_keys.append(('real_thres', 'real_thres', float, 0.9))
         

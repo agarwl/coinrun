@@ -50,14 +50,17 @@ def load_params_for_scope(sess, scope, load_key='default'):
     
     return True
 
-def get_savable_params(loaded_params, scope, keep_heads=False):
+def get_savable_params(loaded_params, scope, keep_heads=False, strict=False):
     params = tf.trainable_variables(scope)
     filtered_params = []
     filtered_loaded = []
 
     if len(loaded_params) != len(params):
         print('param mismatch', len(loaded_params), len(params))
-        assert(False)
+        if (not strict) and (len(params) < len(loaded_params)):
+            loaded_params = loaded_params[:len(params)]
+        else:
+            assert(False)
 
     for p, loaded_p in zip(params, loaded_params):
         keep = True
