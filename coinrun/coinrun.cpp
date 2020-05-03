@@ -85,6 +85,7 @@ const int MAX_MAZE_DIFFICULTY = 4;
 
 bool USE_LEVEL_SET = false;
 int NUM_LEVELS = 0;
+int START_LEVEL = 0;
 int *LEVEL_SEEDS;
 
 bool RANDOM_TILE_COLORS = false;
@@ -1452,7 +1453,7 @@ void state_reset(const std::shared_ptr<State>& state, int game_type)
     level_seed = LEVEL_SEEDS[level_index];
   } else if (NUM_LEVELS > 0) {
     if (STATE_N_AS_LEVEL_SEED)
-      level_seed = state->state_n;
+      level_seed = state->state_n + START_LEVEL;
     else
       level_seed = global_rand_gen.randint(0, NUM_LEVELS);
   } else {
@@ -1832,6 +1833,7 @@ void initialize_args(int *int_args) {
   int rand_seed = int_args[6];
   RANDOM_TRAIN_FLAG = int_args[7];
   STATE_N_AS_LEVEL_SEED = int_args[8];
+  START_LEVEL = int_args[9]; 
 
   if (NUM_LEVELS > 0 && (training_sets_seed != -1)) {
     global_rand_gen.seed(training_sets_seed);

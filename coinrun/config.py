@@ -121,6 +121,7 @@ class ConfigSingle(object):
         
         # TODO(Add better documentation): additional flags for fixing randomness during eval
         type_keys.append(('state_n_as_level_seed', 'state_n_as_level_seed', int, 0))
+        type_keys.append(('start_level', 'start_level', int, 0))
 
         # additonal flags for random netwokrs
         type_keys.append(('train_flag', 'train_flag', int, 0))
