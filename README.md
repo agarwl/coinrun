@@ -22,7 +22,7 @@ apt-get install mpich build-essential qt5-default pkg-config
 # Mac
 brew install qt open-mpi pkg-config
 
-git clone https://github.com/openai/coinrun.git
+git clone https://github.com/theSparta/coinrun_generalization.git
 cd coinrun
 pip install tensorflow==1.12.0  # or tensorflow-gpu
 pip install -r requirements.txt
