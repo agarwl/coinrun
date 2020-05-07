@@ -209,7 +209,7 @@ class CnnPolicy(object):
         self.step = step
         self.value = value
         
-def random_impala_cnn(images, depths=[16, 32, 32], return_representation=False):
+def random_impala_cnn(images, depths=[16, 32, 32]):
     """
     Model used in the paper "IMPALA: Scalable Distributed Deep-RL with 
     Importance Weighted Actor-Learner Architectures" https://arxiv.org/abs/1802.01561
@@ -295,12 +295,8 @@ def random_impala_cnn(images, depths=[16, 32, 32], return_representation=False):
 
     out = tf.layers.flatten(out)
     out = tf.nn.relu(out)
-    representation = out
     out = tf.layers.dense(out, 256, activation=tf.nn.relu)
-    if return_representation:
-        return out, dropout_assign_ops, representation
-    else:
-        return out, dropout_assign_ops
+    return out, dropout_assign_ops
 
 class RandomCnnPolicy(object):
     def __init__(self, sess, ob_space, ac_space, nbatch, nsteps, scope="model", **conv_kwargs): #pylint: disable=W0613
